@@ -1,38 +1,40 @@
 const News = require('../models/news');
-const { userInfo } = require('../helper/verifyToken');
 
 const createNews = (req, res) => {
-  let token = req.headers.token;
-  userInfo(token, function (result) {
-    console.log(result, 'nih result');
-    News.create({
-      title: req.body.title,
-      description: req.body.description,
-      category: req.body.category,
-      urlImage: req.body.urlImage,
-      author: result._id,
-      createdAt: new Date(),
+  News.create({
+    title: req.body.title,
+    description: req.body.description,
+    category: req.body.category,
+    urlImage: req.body.urlImage,
+    author: req.body.author,
+    createdAt: new Date(),
+  })
+    .then((dataNews) => {
+      res.send(dataNews);
     })
-      .then((dataNews) => {
-        res.send(dataNews);
-      })
-      .catch((err) => {
-        res.send(err);
-      });
-  });
+    .catch((err) => {
+      res.send(err);
+    });
 };
 
 const getAllNews = (req, res) => {
-  let token = req.headers.token;
-  userInfo(token, function (result) {
-    News.find({ author: result._id })
-      .then((dataNews) => {
-        res.send(dataNews);
-      })
-      .catch((err) => {
-        res.send(err);
-      });
-  });
+  const params = {
+    category: new RegExp(
+      `${req.query.category ? req.query.category : ''}`,
+      'g'
+    ),
+    title: new RegExp(`${req.query.title ? req.query.title : ''}`, 'g'),
+  };
+  News.find(params)
+    .then((dataNews) => {
+      if (dataNews.length == 0) {
+        res.send({ status: false, data: 'no data' });
+      }
+      res.send({ status: true, data: dataNews, totalNews: dataNews.length });
+    })
+    .catch((err) => {
+      res.send({ status: false, data: err });
+    });
 };
 
 const getSingleNews = (req, res) => {
@@ -46,27 +48,19 @@ const getSingleNews = (req, res) => {
 };
 
 const updateNews = (req, res) => {
-  let token = req.headers.token;
-  userInfo(token, function (result) {
-    News.findById({ _id: req.params.id }, (err, news) => {
-      if (err) {
-        news.send(err);
-      } else {
-        if (news.author === result._id) {
-          (news.title = req.body.title || news.title),
-            (news.description = req.body.description || news.description),
-            (news.category = req.body.category || news.category),
-            (news.urlImage = req.body.urlImage || news.urlImage),
-            (news.updatedAt = new Date());
-
-          news.save((err, news) => {
-            res.send(err ? err : news);
-          });
-        } else {
-          res.send({ message: 'Not authorized' });
-        }
-      }
-    });
+  News.findById({ _id: req.params.id }, (err, news) => {
+    if (err) {
+      news.send(err);
+    } else {
+      (news.title = req.body.title || news.title),
+        (news.description = req.body.description || news.description),
+        (news.category = req.body.category || news.category),
+        (news.urlImage = req.body.urlImage || news.urlImage),
+        (news.updatedAt = new Date());
+      news.save((err, news) => {
+        res.send(err ? err : news);
+      });
+    }
   });
 };
 

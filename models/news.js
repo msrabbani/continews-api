@@ -6,7 +6,7 @@ const newsSchema = new Schema({
   description: { type: String, required: true },
   category: [String],
   urlImage: String,
-  author: { type: Schema.Types.ObjectId, ref: 'User' },
+  author: { type: String, required: true },
   createdAt: Date,
   updatedAt: Date,
 });
